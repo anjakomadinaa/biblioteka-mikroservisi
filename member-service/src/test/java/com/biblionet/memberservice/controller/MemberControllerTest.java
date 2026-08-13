@@ -68,6 +68,22 @@ class MemberControllerTest {
     }
 
     @Test
+    void createMemberWithDuplicateEmailReturns409() throws Exception {
+        given(memberService.createMember(any(MemberRequestDto.class)))
+                .willThrow(new org.springframework.dao.DataIntegrityViolationException("unique constraint"));
+
+        mockMvc.perform(post("/members")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new MemberRequestDto("Ana", "Anić", "ana@example.com"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("Član sa datim email-om već postoji"))
+                .andExpect(jsonPath("$.path").value("/members"));
+    }
+
+    @Test
     void getAllMembersReturnsList() throws Exception {
         given(memberService.getAllMembers()).willReturn(List.of(
                 new MemberResponseDto(1L, "Ana", "Anić", "ana@example.com", LocalDate.of(2026, 8, 13)),

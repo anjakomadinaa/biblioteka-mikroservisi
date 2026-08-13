@@ -71,6 +71,22 @@ class BookControllerTest {
     }
 
     @Test
+    void createBookWithDuplicateIsbnReturns409() throws Exception {
+        given(bookService.createBook(any(BookRequestDto.class)))
+                .willThrow(new org.springframework.dao.DataIntegrityViolationException("unique constraint"));
+
+        mockMvc.perform(post("/books")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(
+                                new BookRequestDto("Seobe", "Miloš Crnjanski", "978-86-7654-321-0"))))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.status").value(409))
+                .andExpect(jsonPath("$.error").value("Conflict"))
+                .andExpect(jsonPath("$.message").value("Knjiga sa datim ISBN-om već postoji"))
+                .andExpect(jsonPath("$.path").value("/books"));
+    }
+
+    @Test
     void getAllBooksReturnsList() throws Exception {
         given(bookService.getAllBooks()).willReturn(List.of(
                 new BookResponseDto(1L, "Na Drini ćuprija", "Ivo Andrić", "978-86-1234-567-8", true),

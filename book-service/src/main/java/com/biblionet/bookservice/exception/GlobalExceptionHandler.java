@@ -1,6 +1,7 @@
 package com.biblionet.bookservice.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -20,6 +21,14 @@ public class GlobalExceptionHandler {
                                                                      HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(body(HttpStatus.NOT_FOUND, ex.getMessage(), request));
+    }
+
+    /** ISBN je unique u bazi - duplikat je konflikt, ne interna greska. */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex,
+                                                                            HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(body(HttpStatus.CONFLICT, "Knjiga sa datim ISBN-om već postoji", request));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

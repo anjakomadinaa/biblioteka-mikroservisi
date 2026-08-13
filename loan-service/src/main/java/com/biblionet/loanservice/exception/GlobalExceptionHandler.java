@@ -1,7 +1,6 @@
-package com.biblionet.memberservice.exception;
+package com.biblionet.loanservice.exception;
 
 import jakarta.servlet.http.HttpServletRequest;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -23,12 +22,18 @@ public class GlobalExceptionHandler {
                 .body(body(HttpStatus.NOT_FOUND, ex.getMessage(), request));
     }
 
-    /** Email je unique u bazi - duplikat je konflikt, ne interna greska. */
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<Map<String, Object>> handleDataIntegrityViolation(DataIntegrityViolationException ex,
-                                                                            HttpServletRequest request) {
+    @ExceptionHandler({BookNotAvailableException.class, InvalidLoanStateException.class})
+    public ResponseEntity<Map<String, Object>> handleConflict(RuntimeException ex,
+                                                              HttpServletRequest request) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(body(HttpStatus.CONFLICT, "Član sa datim email-om već postoji", request));
+                .body(body(HttpStatus.CONFLICT, ex.getMessage(), request));
+    }
+
+    @ExceptionHandler(ServiceUnavailableException.class)
+    public ResponseEntity<Map<String, Object>> handleServiceUnavailable(ServiceUnavailableException ex,
+                                                                        HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(body(HttpStatus.SERVICE_UNAVAILABLE, ex.getMessage(), request));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
