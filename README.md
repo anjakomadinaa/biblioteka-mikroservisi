@@ -187,7 +187,7 @@ cd loan-service && ./mvnw clean test
 |---|---|---|
 | discovery-server | 1 | Podizanje konteksta |
 | api-gateway | 1 | Podizanje konteksta |
-| member-service | 6 | `@WebMvcTest` |
+| member-service | 22 | Unit (servis), `@DataJpaTest`, `@WebMvcTest`, integracioni |
 | book-service | 10 | `@WebMvcTest` |
 | loan-service | 24 | `@WebMvcTest`, `@SpringBootTest`, konfiguracioni |
 | notification-service | 8 | Unit, `@WebMvcTest`, konverter poruka |
@@ -197,6 +197,10 @@ Pored uobičajenog, pokrila sam i situacije koje se lako previde: kompenzaciju k
 `book-service` padne nasred pozajmice, rad sistema kada je RabbitMQ nedostupan, i FIFO
 redosled kroz pravu bazu (jer je redosled osobina upita a ne koda, pa rezervacije namerno
 upisujem pogrešnim redom).
+
+Ponašanje entiteta testiram kroz pravu bazu, a ne mokovan repozitorijum, jer se `@PrePersist`
+i unique constraint drugačije ne mogu proveriti. Kod `member-service` to znači da se stvarno
+proverava da se `membershipDate` upisuje pri čuvanju i da duplirani email zaista puca.
 
 ## CI Pipeline
 
