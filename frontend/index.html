@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="sr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BiblioNet - demo konzola</title>
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<header>
+  <h1>BiblioNet - demo konzola</h1>
+  <p>Svi pozivi idu kroz API Gateway na <code>localhost:8080/api</code>. Panele sa zvezdicom (*) puni RabbitMQ asinhrono.</p>
+</header>
+
+<div class="bar">
+  <button class="ghost" onclick="refreshAll()">Osvezi sve</button>
+  <span><span class="dot"></span> automatsko osvezavanje asinhronih panela na 3s</span>
+</div>
+
+<div class="grid">
+
+  <section class="panel">
+    <h2>Clanovi <span class="port">member-service :8081</span></h2>
+    <p class="hint">POST /api/members</p>
+    <form onsubmit="addMember(event)">
+      <input id="m-first" placeholder="Ime" required>
+      <input id="m-last" placeholder="Prezime" required>
+      <input id="m-email" type="email" placeholder="Email" required>
+      <button>Dodaj</button>
+    </form>
+    <table>
+      <thead><tr><th>ID</th><th>Ime</th><th>Email</th><th>Uclanjen</th></tr></thead>
+      <tbody id="members"></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Knjige <span class="port">book-service :8082</span></h2>
+    <p class="hint">POST /api/books, dostupnost menja loan-service preko Feign-a</p>
+    <form onsubmit="addBook(event)">
+      <input id="b-title" placeholder="Naslov" required>
+      <input id="b-author" placeholder="Autor" required>
+      <input id="b-isbn" placeholder="ISBN" required>
+      <button>Dodaj</button>
+    </form>
+    <table>
+      <thead><tr><th>ID</th><th>Naslov</th><th>Autor</th><th>Dostupna</th></tr></thead>
+      <tbody id="books"></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Pozajmice <span class="port">loan-service :8083</span></h2>
+    <p class="hint">POST /api/loans, proverava clana i knjigu pa objavljuje dogadjaj</p>
+    <form onsubmit="addLoan(event)">
+      <input id="l-member" type="number" placeholder="ID clana" required>
+      <input id="l-book" type="number" placeholder="ID knjige" required>
+      <button>Pozajmi</button>
+    </form>
+    <table>
+      <thead><tr><th>ID</th><th>Clan</th><th>Knjiga</th><th>Rok</th><th>Status</th><th></th></tr></thead>
+      <tbody id="loans"></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>Rezervacije * <span class="port">reservation-service :8085</span></h2>
+    <p class="hint">Red cekanja po FIFO principu. Na <code>loan.returned</code> prvi u redu prelazi u NOTIFIED.</p>
+    <form onsubmit="addReservation(event)">
+      <input id="r-member" type="number" placeholder="ID clana" required>
+      <input id="r-book" type="number" placeholder="ID knjige" required>
+      <button>Rezervisi</button>
+    </form>
+    <table>
+      <thead><tr><th>ID</th><th>Clan</th><th>Knjiga</th><th>Prijavljen</th><th>Status</th><th></th></tr></thead>
+      <tbody id="reservations"></tbody>
+    </table>
+  </section>
+
+  <section class="panel wide">
+    <h2>Obavestenja * <span class="port">notification-service :8084</span></h2>
+    <p class="hint">Nastaju iskljucivo iz RabbitMQ poruka (<code>loan.*</code>), nijedan servis ih ne kreira direktno.</p>
+    <table>
+      <thead><tr><th>ID</th><th>Tip</th><th>Poruka</th><th>Pozajmica</th><th>Vreme</th></tr></thead>
+      <tbody id="notifications"></tbody>
+    </table>
+  </section>
+
+</div>
+
+<div id="log"></div>
+
+<script src="app.js"></script>
+
+</body>
+</html>

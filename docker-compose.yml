@@ -1,0 +1,128 @@
+services:
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - biblionet
+
+  discovery-server:
+    build: ./discovery-server
+    container_name: discovery-server
+    ports:
+      - "8761:8761"
+    networks:
+      - biblionet
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - biblionet
+
+  member-service:
+    build: ./member-service
+    container_name: member-service
+    ports:
+      - "8081:8081"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - biblionet
+
+  book-service:
+    build: ./book-service
+    container_name: book-service
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+    depends_on:
+      - discovery-server
+    networks:
+      - biblionet
+
+  loan-service:
+    build: ./loan-service
+    container_name: loan-service
+    ports:
+      - "8083:8083"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      discovery-server:
+        condition: service_started
+      member-service:
+        condition: service_started
+      book-service:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - biblionet
+
+  notification-service:
+    build: ./notification-service
+    container_name: notification-service
+    ports:
+      - "8084:8084"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      discovery-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - biblionet
+
+  reservation-service:
+    build: ./reservation-service
+    container_name: reservation-service
+    ports:
+      - "8085:8085"
+    environment:
+      EUREKA_URI: http://discovery-server:8761/eureka/
+      RABBITMQ_HOST: rabbitmq
+    depends_on:
+      discovery-server:
+        condition: service_started
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - biblionet
+
+  frontend:
+    build: ./frontend
+    container_name: frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      - api-gateway
+    networks:
+      - biblionet
+
+networks:
+  biblionet:
+    driver: bridge
