@@ -188,7 +188,7 @@ cd loan-service && ./mvnw clean test
 | discovery-server | 1 | Podizanje konteksta |
 | api-gateway | 1 | Podizanje konteksta |
 | member-service | 22 | Unit (servis), `@DataJpaTest`, `@WebMvcTest`, integracioni |
-| book-service | 10 | `@WebMvcTest` |
+| book-service | 25 | Unit (servis), `@DataJpaTest`, `@WebMvcTest`, integracioni |
 | loan-service | 24 | `@WebMvcTest`, `@SpringBootTest`, konfiguracioni |
 | notification-service | 8 | Unit, `@WebMvcTest`, konverter poruka |
 | reservation-service | 13 | `@DataJpaTest`, `@WebMvcTest` |
@@ -200,7 +200,11 @@ upisujem pogrešnim redom).
 
 Ponašanje entiteta testiram kroz pravu bazu, a ne mokovan repozitorijum, jer se `@PrePersist`
 i unique constraint drugačije ne mogu proveriti. Kod `member-service` to znači da se stvarno
-proverava da se `membershipDate` upisuje pri čuvanju i da duplirani email zaista puca.
+proverava da se `membershipDate` upisuje pri čuvanju i da duplirani email zaista puca, a kod
+`book-service` da je nova knjiga uvek dostupna i da duplirani ISBN vraća 409 umesto 500.
+
+`PATCH /books/{id}/availability` je posebno pokriven integracionim testom, jer taj endpoint
+`loan-service` zove preko Feign-a pri svakoj pozajmici i vraćanju.
 
 ## CI Pipeline
 
