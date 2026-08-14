@@ -9,8 +9,23 @@ on:
 jobs:
 
   build-and-test:
-    name: Build i testovi
+    name: Build i testovi (${{ matrix.module }})
     runs-on: ubuntu-latest
+
+    strategy:
+      # Moduli su medjusobno nezavisni, pa se grade paralelno.
+      # fail-fast: false znaci da pad jednog modula ne prekida ostale,
+      # pa se iz jednog pokretanja vidi stanje svih sedam.
+      fail-fast: false
+      matrix:
+        module:
+          - discovery-server
+          - api-gateway
+          - member-service
+          - book-service
+          - loan-service
+          - notification-service
+          - reservation-service
 
     steps:
       - name: Checkout koda
@@ -23,33 +38,17 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
-      - name: Build i testovi - discovery-server
-        working-directory: ./discovery-server
-        run: ./mvnw clean package
+      - name: Build i testovi
+        working-directory: ./${{ matrix.module }}
+        run: ./mvnw -B clean package
 
-      - name: Build i testovi - api-gateway
-        working-directory: ./api-gateway
-        run: ./mvnw clean package
-
-      - name: Build i testovi - member-service
-        working-directory: ./member-service
-        run: ./mvnw clean package
-
-      - name: Build i testovi - book-service
-        working-directory: ./book-service
-        run: ./mvnw clean package
-
-      - name: Build i testovi - loan-service
-        working-directory: ./loan-service
-        run: ./mvnw clean package
-
-      - name: Build i testovi - notification-service
-        working-directory: ./notification-service
-        run: ./mvnw clean package
-
-      - name: Build i testovi - reservation-service
-        working-directory: ./reservation-service
-        run: ./mvnw clean package
+      - name: Cuvanje rezultata testova
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rezultati-testova-${{ matrix.module }}
+          path: ${{ matrix.module }}/target/surefire-reports/
+          if-no-files-found: ignore
 
   docker-build:
     name: Docker slike
